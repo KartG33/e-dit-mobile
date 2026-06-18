@@ -53,6 +53,14 @@ body {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
+
+  /* Horizontal scroll affordance: fades content near the right edge so it's
+     visually obvious there's more to scroll to, without showing a scrollbar.
+     The fade itself doesn't block clicks, the scroll container underneath does. */
+  .scroll-fade-x {
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+  }
   
   /* Glassmorphism Panel Utility */
   .glass-panel {

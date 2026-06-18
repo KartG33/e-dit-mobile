@@ -54,7 +54,7 @@ export const SymbolPanel: React.FC<Props> = ({ text, onRemoveSymbol }) => {
   if (symbols.length === 0) return null;
 
   return (
-    <div className="border-b border-white/5 bg-white/[0.03] backdrop-blur-sm flex items-center p-2.5 gap-4 shrink-0 shadow-sm relative z-10 overflow-x-auto whitespace-nowrap scrollbar-hide">
+    <div className="border-b border-white/5 bg-white/[0.03] backdrop-blur-sm flex items-center p-2.5 gap-4 shrink-0 shadow-sm relative z-10 overflow-x-auto whitespace-nowrap scroll-fade-x">
       
       <div 
         ref={scrollRef}

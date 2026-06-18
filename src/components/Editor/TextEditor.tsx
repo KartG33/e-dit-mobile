@@ -7,6 +7,7 @@ interface TextEditorProps {
   isActive?: boolean;
   onClick?: () => void;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export const TextEditor: React.FC<TextEditorProps> = ({ 
@@ -15,7 +16,8 @@ export const TextEditor: React.FC<TextEditorProps> = ({
   placeholder = 'Введите текст...',
   isActive = true,
   onClick,
-  className = ''
+  className = '',
+  style
 }) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -29,7 +31,8 @@ export const TextEditor: React.FC<TextEditorProps> = ({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={`w-full h-full p-6 pb-24 text-gray-100 border-none outline-none resize-none font-mono text-base leading-relaxed placeholder:text-gray-500/50 transition-all shadow-[inset_0_4px_20px_rgba(0,0,0,0.5)] ${isActive ? 'bg-black/40' : 'bg-black/20'}`}
+        style={style}
+        className={`w-full h-full p-6 text-gray-100 border-none outline-none resize-none font-mono text-base leading-relaxed placeholder:text-gray-500/50 transition-all shadow-[inset_0_4px_20px_rgba(0,0,0,0.5)] ${isActive ? 'bg-black/40' : 'bg-black/20'}`}
         spellCheck={false}
       />
     </div>

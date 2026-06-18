@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { EditorToolbar } from '../Editor/EditorToolbar';
 import { BasicCommands } from '../Commands/BasicCommands';
 import { SunoCommands } from '../Commands/SunoCommands';
@@ -17,6 +17,9 @@ interface MobileCommandBarProps {
   onClear: () => void;
   text: string;
   isKeyboardOpen?: boolean;
+  // Reports the bar's real rendered height in px, so parents can reserve
+  // exactly that much space instead of guessing with a fixed number.
+  onHeightChange?: (height: number) => void;
 }
 
 export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
@@ -29,10 +32,31 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
   canRedo,
   onClear,
   text,
-  isKeyboardOpen
+  isKeyboardOpen,
+  onHeightChange
 }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el || !onHeightChange) return;
+
+    // Report height whenever it changes: different tabs (Basic/Suno/Presets)
+    // can wrap to different numbers of rows, and the keyboard toggling
+    // hides/shows the bottom section entirely.
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) {
+        onHeightChange(entry.contentRect.height);
+      }
+    });
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [onHeightChange]);
+
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col pointer-events-none">
+    <div ref={containerRef} className="fixed bottom-0 left-0 right-0 z-30 flex flex-col pointer-events-none">
       
       {/* Top Layer: Floating Actions */}
       <div className="flex justify-center w-full mb-3 pointer-events-auto">
@@ -43,6 +67,7 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
           canRedo={canRedo}
           onClear={onClear}
           text={text}
+          onCommand={onCommand}
           className=""
         />
       </div>
@@ -53,7 +78,7 @@ export const MobileCommandBar: React.FC<MobileCommandBarProps> = ({
           
           {/* Middle Layer: Scrollable Commands Strip */}
           <div className="w-full border-b border-white/5 bg-white/[0.02]">
-            <div className="flex overflow-x-auto scrollbar-hide px-2 py-2 items-center gap-2">
+            <div className="flex overflow-x-auto scroll-fade-x px-2 py-2 items-center gap-2">
               {activeTab === 'basic' && <BasicCommands onCommand={onCommand} />}
               {activeTab === 'suno' && <SunoCommands onCommand={onCommand} />}
               {activeTab === 'presets' && <PresetsTab onCommand={onCommand} />}

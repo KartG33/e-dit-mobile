@@ -19,7 +19,7 @@ export const BasicCommands: React.FC<BasicCommandsProps> = ({ onCommand }) => {
     <div 
       ref={scrollRef}
       onWheel={handleWheel}
-      className="flex flex-nowrap overflow-x-auto gap-2 pb-1 scrollbar-hide"
+      className="flex flex-nowrap overflow-x-auto gap-2 pb-1 scroll-fade-x"
     >
       {basicCommands.map(cmd => (
         <CommandButton

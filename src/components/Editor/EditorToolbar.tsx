@@ -9,6 +9,9 @@ interface EditorToolbarProps {
   onClear: () => void;
   text: string;
   className?: string;
+  // Runs a transform against the current text, same contract as command buttons.
+  // Used here to actually insert pasted text instead of just logging it.
+  onCommand?: (fn: (text: string) => string) => void;
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
@@ -18,7 +21,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   canRedo,
   onClear,
   text,
-  className = "absolute bottom-6 left-1/2 -translate-x-1/2"
+  className = "absolute bottom-6 left-1/2 -translate-x-1/2",
+  onCommand
 }) => {
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
@@ -27,9 +31,11 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   const handlePaste = async () => {
     try {
       const clipText = await navigator.clipboard.readText();
-      // To implement full paste with cursor position, we'd need a ref to the textarea
-      // For now, this just logs since setText is from parent but we don't have direct insert
-      console.log('Clipboard content:', clipText);
+      if (!clipText || !onCommand) return;
+      // Appends clipboard contents to the end of the current text. We don't
+      // have cursor-position tracking here, so end-of-text is the
+      // predictable, always-correct place to insert.
+      onCommand((current) => current + clipText);
     } catch (err) {
       console.error('Failed to read clipboard contents: ', err);
     }
@@ -68,7 +74,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
       <button
         onClick={handlePaste}
         className="p-2.5 rounded-xl transition-all duration-200 hover:bg-white/10 text-gray-300"
-        title="Вставить"
+        title="Вставить в конец текста"
       >
         <ClipboardPaste size={18} />
       </button>

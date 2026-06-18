@@ -15,6 +15,9 @@ function App() {
   const [activeTab, setActiveTab] = useState<BottomNavTab>('basic');
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  // Real measured height of MobileCommandBar, so the editor reserves exactly
+  // enough space and never shows a dead gap or gets covered by the bar.
+  const [commandBarHeight, setCommandBarHeight] = useState(0);
 
   useEffect(() => {
     Keyboard.addListener('keyboardWillShow', () => {
@@ -79,7 +82,7 @@ function App() {
             value={activeEditor.text}
             onChange={activeEditor.setText}
             placeholder="Введите или вставьте текст..."
-            className="pb-[180px]"
+            style={{ paddingBottom: isKeyboardOpen ? 0 : commandBarHeight }}
           />
         </div>
 
@@ -95,6 +98,7 @@ function App() {
           onClear={activeEditor.clear}
           text={activeEditor.text}
           isKeyboardOpen={isKeyboardOpen}
+          onHeightChange={setCommandBarHeight}
         />
 
         {/* Sync Modal */}

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { useEditor } from './hooks/useEditor';
 import { TextEditor } from './components/Editor/TextEditor';
@@ -18,6 +18,16 @@ function App() {
   // Real measured height of MobileCommandBar, so the editor reserves exactly
   // enough space and never shows a dead gap or gets covered by the bar.
   const [commandBarHeight, setCommandBarHeight] = useState(0);
+  const [toggledSymbols, setToggledSymbols] = useState<Set<string>>(new Set());
+
+  // What to display: original text with toggled symbols removed
+  const displayedText = useMemo(() => {
+    let t = activeEditor.text;
+    toggledSymbols.forEach(sym => {
+      t = t.split(sym).join('');
+    });
+    return t;
+  }, [activeEditor.text, toggledSymbols]);
 
   useEffect(() => {
     Keyboard.addListener('keyboardWillShow', () => {
@@ -72,15 +82,25 @@ function App() {
           {/* Symbol Analyzer above text */}
           <SymbolPanel 
             text={activeEditor.text} 
-            onRemoveSymbol={(sym) => {
-              // Escape symbol for regex if needed, or simple string replaceAll
-              activeEditor.setText(activeEditor.text.split(sym).join(''));
+            toggledSymbols={toggledSymbols}
+            onToggleSymbol={(sym) => {
+              setToggledSymbols(prev => {
+                const next = new Set(prev);
+                if (next.has(sym)) next.delete(sym);
+                else next.add(sym);
+                return next;
+              });
             }}
           />
           
           <TextEditor
-            value={activeEditor.text}
-            onChange={activeEditor.setText}
+            value={displayedText}
+            onChange={(newText) => {
+              if (toggledSymbols.size === 0) {
+                activeEditor.setText(newText);
+              }
+            }}
+            readOnly={toggledSymbols.size > 0}
             placeholder="Введите или вставьте текст..."
             style={{ paddingBottom: isKeyboardOpen ? 0 : commandBarHeight }}
           />

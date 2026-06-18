@@ -1,0 +1,6 @@
+{
+  "appId": "com.edit.app",
+  "appName": "E-dit",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

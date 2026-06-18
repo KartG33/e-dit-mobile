@@ -1,0 +1,50 @@
+{
+  "name": "e-dit-mobile",
+  "version": "1.0.0",
+  "description": "Профессиональный инструмент для форматирования и редактирования текста",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "capacitor:init": "npx cap init",
+    "capacitor:add:android": "npx cap add android",
+    "capacitor:sync": "npx cap sync",
+    "capacitor:open:android": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/keyboard": "^5.0.9",
+    "clsx": "^2.0.0",
+    "dexie": "^3.2.4",
+    "dexie-react-hooks": "^1.1.7",
+    "html5-qrcode": "^2.3.8",
+    "lucide-react": "^0.294.0",
+    "peerjs": "^1.5.5",
+    "qrcode": "^1.5.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^2.1.0",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^5.5.1",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/camera": "^5.0.7",
+    "@capacitor/cli": "^5.5.1",
+    "@capacitor/core": "^5.5.1",
+    "@capacitor/filesystem": "^5.1.4",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.8",
+    "workbox-cli": "^7.0.0",
+    "workbox-precaching": "^7.0.0",
+    "workbox-routing": "^7.0.0",
+    "workbox-strategies": "^7.0.0"
+  }
+}

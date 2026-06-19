@@ -1,5 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { X } from 'lucide-react';
+import { db } from '../../lib/db/schema';
+import { useLiveQuery } from 'dexie-react-hooks';
 
 interface NotesSheetProps {
   isOpen: boolean;
@@ -8,6 +10,28 @@ interface NotesSheetProps {
 
 export const NotesSheet: React.FC<NotesSheetProps> = ({ isOpen, onClose }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  
+  // Always query the single "Заметки" note (id=1 for simplicity)
+  const notes = useLiveQuery(() => db.notes.where('title').equals('Заметки').toArray());
+  const scratchpad = notes && notes.length > 0 ? notes[0] : null;
+
+  const [content, setContent] = useState('');
+
+  // Update local state when db loads
+  useEffect(() => {
+    if (scratchpad) {
+      setContent(scratchpad.content);
+    }
+  }, [scratchpad]);
+
+  const saveNote = useCallback((newContent: string) => {
+    setContent(newContent);
+    if (scratchpad?.id) {
+      db.notes.update(scratchpad.id, { content: newContent, updatedAt: Date.now() });
+    } else {
+      db.notes.add({ title: 'Заметки', content: newContent, createdAt: Date.now(), updatedAt: Date.now() });
+    }
+  }, [scratchpad]);
 
   // Close on Escape key
   useEffect(() => {
@@ -52,6 +76,8 @@ export const NotesSheet: React.FC<NotesSheetProps> = ({ isOpen, onClose }) => {
             className="w-full h-[300px] sm:h-[400px] bg-transparent border-none outline-none resize-none text-gray-200 placeholder:text-gray-500 font-sans text-sm"
             placeholder="Ваши заметки..."
             spellCheck={false}
+            value={content}
+            onChange={(e) => saveNote(e.target.value)}
           />
         </div>
       </div>

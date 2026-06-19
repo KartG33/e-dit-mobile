@@ -1,5 +1,5 @@
-import React from 'react';
-import { Undo, Redo, Trash2, Copy, ClipboardPaste, BookOpen } from 'lucide-react';
+import React, { useState } from 'react';
+import { Undo, Redo, Trash2, Copy, ClipboardPaste, BookOpen, Check } from 'lucide-react';
 
 interface EditorToolbarProps {
   onUndo: () => void;
@@ -23,8 +23,12 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   text,
   onPaste
 }) => {
+  const [copied, setCopied] = useState(false);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const handlePaste = async () => {
@@ -68,8 +72,10 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
           <span className="text-[10px] font-medium leading-none">Вставить</span>
         </button>
         <button onClick={handleCopy} className={btnClass} title="Копировать">
-          <Copy size={20} />
-          <span className="text-[10px] font-medium leading-none">Копия</span>
+          {copied ? <Check size={20} className="text-green-400" /> : <Copy size={20} />}
+          <span className={`text-[10px] font-medium leading-none ${copied ? 'text-green-400' : ''}`}>
+            {copied ? 'Готово' : 'Копия'}
+          </span>
         </button>
       </div>
 

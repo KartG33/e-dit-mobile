@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useDebounce } from '../../hooks/useDebounce';
 
 interface Props { 
@@ -11,11 +11,9 @@ export const SymbolPanel: React.FC<Props> = ({ text, toggledSymbols, onToggleSym
   const scrollRef = useRef<HTMLDivElement>(null);
   const debouncedText = useDebounce(text, 300);
   
-  // Maintain a persistent set of discovered symbols so buttons don't disappear
-  const [knownSymbols, setKnownSymbols] = useState<Set<string>>(new Set());
-
-  useEffect(() => {
-    if (!debouncedText) return;
+  const symbolsList = React.useMemo(() => {
+    if (!debouncedText) return [];
+  
     const newSymbols = new Set<string>();
     let remainingText = debouncedText;
 
@@ -42,20 +40,17 @@ export const SymbolPanel: React.FC<Props> = ({ text, toggledSymbols, onToggleSym
         newSymbols.add(char);
       }
     }
-
-    setKnownSymbols(prev => {
-      let hasNew = false;
-      for (const sym of newSymbols) {
-        if (!prev.has(sym)) hasNew = true;
-      }
-      if (hasNew) {
-        const next = new Set(prev);
-        for (const sym of newSymbols) next.add(sym);
-        return next;
-      }
-      return prev;
-    });
+    
+    return Array.from(newSymbols);
   }, [debouncedText]);
+
+  useEffect(() => {
+    toggledSymbols.forEach(sym => {
+      if (!symbolsList.includes(sym)) {
+        onToggleSymbol(sym);
+      }
+    });
+  }, [symbolsList, toggledSymbols, onToggleSymbol]);
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (scrollRef.current && e.deltaY !== 0) {
@@ -63,7 +58,6 @@ export const SymbolPanel: React.FC<Props> = ({ text, toggledSymbols, onToggleSym
     }
   };
 
-  const symbolsList = Array.from(knownSymbols);
   if (symbolsList.length === 0) return null;
 
   return (

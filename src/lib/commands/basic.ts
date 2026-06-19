@@ -38,7 +38,7 @@ export const basicCommands: Command[] = [
     id: 'to-title-case',
     name: 'Каждое Слово',
     category: 'basic',
-    execute: (text) => text.replace(/\b\w/g, char => char.toUpperCase())
+    execute: (text) => text.replace(/(?:^|[^\p{L}\p{N}_])[\p{L}\p{N}_]/gu, char => char.toUpperCase())
   },
   {
     id: 'to-sentence-case',
@@ -46,7 +46,7 @@ export const basicCommands: Command[] = [
     category: 'basic',
     description: 'Заглавная буква в начале предложений',
     execute: (text) => {
-      return text.replace(/(^\s*\w|[.!?]\s+\w)/g, match => match.toUpperCase());
+      return text.replace(/(^\s*[\p{L}\p{N}]|[.!?]\s+[\p{L}\p{N}])/gu, match => match.toUpperCase());
     }
   },
   {

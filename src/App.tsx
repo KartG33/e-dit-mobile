@@ -1,59 +1,84 @@
-import { useState, useRef, useCallback, useEffect, useMemo } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { Keyboard, KeyboardResize } from '@capacitor/keyboard';
 import { useEditor } from './hooks/useEditor';
 import { TextEditor } from './components/Editor/TextEditor';
 import { SymbolPanel } from './components/SymbolAnalyzer/SymbolPanel';
-import { SyncButton } from './components/Sync/SyncButton';
-import { SyncModal } from './components/Sync/SyncModal';
 import { HeaderTabs, NavTab } from './components/UI/HeaderTabs';
 import { BasicCommands } from './components/Commands/BasicCommands';
 import { SunoCommands } from './components/Commands/SunoCommands';
 import { PresetsTab } from './components/Presets/PresetsTab';
 import { EditorToolbar } from './components/Editor/EditorToolbar';
 import { NotesSheet } from './components/Notes/NotesSheet';
-import { useSync } from './hooks/useSync';
 
 
 function App() {
   const activeEditor = useEditor();
   const [activeTab, setActiveTab] = useState<NavTab>('basic');
-  const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [toggledSymbols, setToggledSymbols] = useState<Set<string>>(new Set());
 
-  // What to display: original text with toggled symbols removed
-  const displayedText = useMemo(() => {
-    let t = activeEditor.text;
-    toggledSymbols.forEach(sym => {
-      t = t.split(sym).join('');
-    });
-    return t;
+  const { displayedText, indexMap } = useMemo(() => {
+    let t = '';
+    let map: number[] = [];
+    const text = activeEditor.text;
+    const symbols = Array.from(toggledSymbols).sort((a, b) => b.length - a.length);
+    let i = 0;
+    while (i < text.length) {
+      const matchedSym = symbols.find(sym => text.startsWith(sym, i));
+      if (matchedSym) {
+        i += matchedSym.length;
+      } else {
+        map.push(i);
+        t += text[i];
+        i++;
+      }
+    }
+    map.push(i);
+    return { displayedText: t, indexMap: map };
   }, [activeEditor.text, toggledSymbols]);
+
+  const handleEditorChange = useCallback((newText: string, start?: number, end?: number) => {
+    if (toggledSymbols.size > 0 && newText !== displayedText) {
+      let prefixLen = 0;
+      while (prefixLen < displayedText.length && prefixLen < newText.length && displayedText[prefixLen] === newText[prefixLen]) {
+        prefixLen++;
+      }
+      
+      let suffixLen = 0;
+      while (suffixLen < displayedText.length - prefixLen && suffixLen < newText.length - prefixLen && displayedText[displayedText.length - 1 - suffixLen] === newText[newText.length - 1 - suffixLen]) {
+        suffixLen++;
+      }
+
+      const insertedText = newText.substring(prefixLen, newText.length - suffixLen);
+      const origStart = indexMap[prefixLen];
+      let origEnd = origStart;
+      
+      if (prefixLen < displayedText.length - suffixLen) {
+         origEnd = indexMap[displayedText.length - suffixLen - 1] + 1;
+      }
+
+      const newOrigText = activeEditor.text.substring(0, origStart) + insertedText + activeEditor.text.substring(origEnd);
+      
+      const mapNewToOrig = (idx: number) => {
+        if (idx <= prefixLen) return indexMap[idx];
+        if (idx <= prefixLen + insertedText.length) return origStart + (idx - prefixLen);
+        const suffixIdx = idx - (newText.length - suffixLen);
+        return indexMap[displayedText.length - suffixLen + suffixIdx];
+      };
+
+      const newStart = typeof start === 'number' ? mapNewToOrig(start) : undefined;
+      const newEnd = typeof end === 'number' ? mapNewToOrig(end) : undefined;
+
+      activeEditor.setText(newOrigText, newStart, newEnd);
+    } else {
+      activeEditor.setText(newText, start, end);
+    }
+  }, [activeEditor, toggledSymbols, displayedText, indexMap]);
 
   useEffect(() => {
     // Optional: Configure keyboard to resize body
     Keyboard.setResizeMode({ mode: KeyboardResize.Body }).catch(() => {});
   }, []);
-
-  const lastReceivedTextRef = useRef<string | null>(null);
-
-  const handleReceiveText = useCallback((text: string) => {
-    lastReceivedTextRef.current = text;
-    activeEditor.setText(text);
-    setToggledSymbols(new Set()); // Remove filtering/readOnly conceptually on incoming text
-  }, [activeEditor]);
-
-  const sync = useSync(handleReceiveText);
-
-  // Send text updates to peer, avoiding echo
-  useEffect(() => {
-    if (sync.status === 'connected') {
-      if (activeEditor.text !== lastReceivedTextRef.current) {
-        sync.sendText(activeEditor.text);
-      }
-      lastReceivedTextRef.current = null;
-    }
-  }, [activeEditor.text, sync.status, sync.sendText]);
 
   return (
     <div className="h-[100dvh] flex flex-col text-white font-sans bg-[#0a0d14] overflow-hidden">
@@ -65,7 +90,6 @@ function App() {
               <div className="text-gray-400 text-[12px] font-medium bg-white/5 px-1.5 py-0.5 rounded-md border border-white/5 shadow-inner">
                 <span className="text-blue-400">{activeEditor.stats.chars}</span> симв.
               </div>
-              <SyncButton status={sync.status} onClick={() => setIsSyncModalOpen(true)} />
             </div>
           </header>
 
@@ -101,12 +125,7 @@ function App() {
           <TextEditor
             editorRef={activeEditor.textareaRef}
             value={displayedText}
-            onChange={(newText, start, end) => {
-              if (toggledSymbols.size > 0) {
-                setToggledSymbols(new Set()); // Restore normal text entry
-              }
-              activeEditor.setText(newText, start, end);
-            }}
+            onChange={handleEditorChange}
             placeholder="Введите или вставьте текст..."
             className="pb-24" 
           />
@@ -123,18 +142,6 @@ function App() {
           text={activeEditor.text}
           onCommand={activeEditor.applyCommand}
           onPaste={activeEditor.pasteAtCursor}
-        />
-
-        {/* Sync Modal */}
-        <SyncModal 
-          isOpen={isSyncModalOpen}
-          onClose={() => setIsSyncModalOpen(false)}
-          peerId={sync.peerId}
-          remotePeerId={sync.remotePeerId}
-          status={sync.status}
-          errorMsg={sync.errorMsg}
-          onConnect={sync.connectToPeer}
-          onDisconnect={sync.disconnect}
         />
 
         {/* Notes Sheet */}

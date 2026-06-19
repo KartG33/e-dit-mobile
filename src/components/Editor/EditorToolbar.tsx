@@ -45,7 +45,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   const btnClass = "flex flex-col items-center justify-center gap-1 min-w-[44px] min-h-[44px] px-2 py-1.5 rounded-xl transition-all duration-200 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent text-gray-300";
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-2 p-2 bg-[#0a0d14]/90 backdrop-blur-xl border-t border-white/10 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.5)]">
+    <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-2 p-2 bg-[#0a0d14] border-t border-white/10 pb-safe shadow-lg">
       
       {/* Group 1: History */}
       <div className="flex items-center gap-1">

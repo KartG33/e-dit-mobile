@@ -97,7 +97,7 @@ function App() {
         </div>
 
         {/* Mobile Main Editor */}
-        <div className="flex-1 flex flex-col min-w-0 relative overflow-y-auto">
+        <div className="flex-1 flex flex-col min-w-0 relative">
           <TextEditor
             editorRef={activeEditor.textareaRef}
             value={displayedText}

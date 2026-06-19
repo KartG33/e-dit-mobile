@@ -38,7 +38,7 @@ export const TextEditor: React.FC<TextEditorProps> = ({
         }}
         placeholder={placeholder}
         style={style}
-        className={`w-full h-full p-6 text-gray-100 border-none outline-none resize-none font-mono text-base leading-relaxed placeholder:text-gray-500/50 transition-all shadow-[inset_0_4px_20px_rgba(0,0,0,0.5)] ${isActive ? 'bg-black/40' : 'bg-black/20'}`}
+        className={`w-full h-full p-6 text-gray-100 border-none outline-none resize-none font-mono text-base leading-relaxed placeholder:text-gray-500/50 ${isActive ? 'bg-black/40' : 'bg-black/20'}`}
         spellCheck={false}
       />
     </div>

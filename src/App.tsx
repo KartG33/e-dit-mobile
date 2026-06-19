@@ -24,7 +24,18 @@ function App() {
     const symbols = Array.from(toggledSymbols).sort((a, b) => b.length - a.length);
     let i = 0;
     while (i < text.length) {
-      const matchedSym = symbols.find(sym => text.startsWith(sym, i));
+      const matchedSym = symbols.find(sym => {
+        if (!text.startsWith(sym, i)) return false;
+        
+        const char = sym[0];
+        const isUniform = sym.split('').every(c => c === char);
+        if (isUniform) {
+          if (i > 0 && text[i - 1] === char) return false;
+          if (i + sym.length < text.length && text[i + sym.length] === char) return false;
+        }
+        return true;
+      });
+      
       if (matchedSym) {
         i += matchedSym.length;
       } else {

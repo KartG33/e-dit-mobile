@@ -23,21 +23,11 @@ export const SymbolPanel: React.FC<Props> = ({ text, toggledSymbols, onToggleSym
       remainingText = remainingText.replace(/(?:^|\n)\s*\d+\./g, '');
     }
 
-    const multiTokens = ['---', '...', '```', '=='];
-    for (const token of multiTokens) {
-      const escapeRegex = (str: string) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(escapeRegex(token), 'g');
-      if (regex.test(remainingText)) {
-        newSymbols.add(token);
-        remainingText = remainingText.replace(regex, '');
-      }
-    }
-
-    const symbolRegex = /[_\-+\>~`!@#$%^&*()[\]{}|\\:;"'<>,.?/]/g;
+    const symbolRegex = /([_\-+\>~`!@#$%^&*()[\]{}|\\:;"'<>,.?/=])\1*/g;
     const matches = remainingText.match(symbolRegex);
     if (matches) {
-      for (const char of matches) {
-        newSymbols.add(char);
+      for (const token of matches) {
+        newSymbols.add(token);
       }
     }
     

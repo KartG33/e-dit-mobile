@@ -10,6 +10,7 @@ interface EditorToolbarProps {
   onNotesClick: () => void;
   text: string;
   onCommand?: (fn: (text: string) => string) => void;
+  onPaste?: (text: string) => void;
 }
 
 export const EditorToolbar: React.FC<EditorToolbarProps> = ({
@@ -20,7 +21,7 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   onClear,
   onNotesClick,
   text,
-  onCommand
+  onPaste
 }) => {
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
@@ -29,8 +30,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   const handlePaste = async () => {
     try {
       const clipText = await navigator.clipboard.readText();
-      if (!clipText || !onCommand) return;
-      onCommand((current) => current + clipText);
+      if (!clipText || !onPaste) return;
+      onPaste(clipText);
     } catch (err) {
       console.error('Failed to read clipboard contents: ', err);
     }

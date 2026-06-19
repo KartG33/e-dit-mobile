@@ -1,14 +1,14 @@
-import React, { useRef } from 'react';
+import React from 'react';
 
 interface TextEditorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (value: string, start?: number, end?: number) => void;
   placeholder?: string;
   isActive?: boolean;
   onClick?: () => void;
   className?: string;
   style?: React.CSSProperties;
-  readOnly?: boolean;
+  editorRef?: React.RefObject<HTMLTextAreaElement>;
 }
 
 export const TextEditor: React.FC<TextEditorProps> = ({ 
@@ -19,9 +19,8 @@ export const TextEditor: React.FC<TextEditorProps> = ({
   onClick,
   className = '',
   style,
-  readOnly = false
+  editorRef
 }) => {
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   return (
     <div 
@@ -29,13 +28,17 @@ export const TextEditor: React.FC<TextEditorProps> = ({
       onClick={() => onClick && onClick()}
     >
       <textarea
-        ref={textareaRef}
+        ref={editorRef}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(e.target.value, e.target.selectionStart, e.target.selectionEnd)}
+        onSelect={(e) => {
+          // Track cursor without changing text
+          const target = e.target as HTMLTextAreaElement;
+          onChange(value, target.selectionStart, target.selectionEnd);
+        }}
         placeholder={placeholder}
         style={style}
-        readOnly={readOnly}
-        className={`w-full h-full p-6 text-gray-100 border-none outline-none resize-none font-mono text-base leading-relaxed placeholder:text-gray-500/50 transition-all shadow-[inset_0_4px_20px_rgba(0,0,0,0.5)] ${isActive ? 'bg-black/40' : 'bg-black/20'} ${readOnly ? 'opacity-70' : ''}`}
+        className={`w-full h-full p-6 text-gray-100 border-none outline-none resize-none font-mono text-base leading-relaxed placeholder:text-gray-500/50 transition-all shadow-[inset_0_4px_20px_rgba(0,0,0,0.5)] ${isActive ? 'bg-black/40' : 'bg-black/20'}`}
         spellCheck={false}
       />
     </div>

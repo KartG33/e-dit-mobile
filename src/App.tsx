@@ -40,6 +40,7 @@ function App() {
   const handleReceiveText = useCallback((text: string) => {
     lastReceivedTextRef.current = text;
     activeEditor.setText(text);
+    setToggledSymbols(new Set()); // Remove filtering/readOnly conceptually on incoming text
   }, [activeEditor]);
 
   const sync = useSync(handleReceiveText);
@@ -98,13 +99,14 @@ function App() {
         {/* Mobile Main Editor */}
         <div className="flex-1 flex flex-col min-w-0 relative overflow-y-auto">
           <TextEditor
+            editorRef={activeEditor.textareaRef}
             value={displayedText}
-            onChange={(newText) => {
-              if (toggledSymbols.size === 0) {
-                activeEditor.setText(newText);
+            onChange={(newText, start, end) => {
+              if (toggledSymbols.size > 0) {
+                setToggledSymbols(new Set()); // Restore normal text entry
               }
+              activeEditor.setText(newText, start, end);
             }}
-            readOnly={toggledSymbols.size > 0}
             placeholder="Введите или вставьте текст..."
             className="pb-24" 
           />
@@ -120,6 +122,7 @@ function App() {
           onNotesClick={() => setIsNotesOpen(true)}
           text={activeEditor.text}
           onCommand={activeEditor.applyCommand}
+          onPaste={activeEditor.pasteAtCursor}
         />
 
         {/* Sync Modal */}

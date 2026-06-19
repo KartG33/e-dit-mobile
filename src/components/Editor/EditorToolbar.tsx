@@ -1,5 +1,5 @@
 import React from 'react';
-import { Undo, Redo, Trash2, Copy, ClipboardPaste } from 'lucide-react';
+import { Undo, Redo, Trash2, Copy, ClipboardPaste, BookOpen } from 'lucide-react';
 
 interface EditorToolbarProps {
   onUndo: () => void;
@@ -7,10 +7,8 @@ interface EditorToolbarProps {
   canUndo: boolean;
   canRedo: boolean;
   onClear: () => void;
+  onNotesClick: () => void;
   text: string;
-  className?: string;
-  // Runs a transform against the current text, same contract as command buttons.
-  // Used here to actually insert pasted text instead of just logging it.
   onCommand?: (fn: (text: string) => string) => void;
 }
 
@@ -20,8 +18,8 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
   canUndo,
   canRedo,
   onClear,
+  onNotesClick,
   text,
-  className = "absolute bottom-6 left-1/2 -translate-x-1/2",
   onCommand
 }) => {
   const handleCopy = () => {
@@ -32,62 +30,62 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
     try {
       const clipText = await navigator.clipboard.readText();
       if (!clipText || !onCommand) return;
-      // Appends clipboard contents to the end of the current text. We don't
-      // have cursor-position tracking here, so end-of-text is the
-      // predictable, always-correct place to insert.
       onCommand((current) => current + clipText);
     } catch (err) {
       console.error('Failed to read clipboard contents: ', err);
     }
   };
 
+  const handleNotes = () => {
+    onNotesClick();
+  };
+
+  // min-h-[44px] min-w-[44px] is Apple HIG standard for touch targets
+  const btnClass = "flex flex-col items-center justify-center gap-1 min-w-[44px] min-h-[44px] px-2 py-1.5 rounded-xl transition-all duration-200 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent text-gray-300";
+
   return (
-    <div className={`flex items-center gap-1.5 p-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.5)] z-20 ${className}`}>
-      <button
-        onClick={onUndo}
-        disabled={!canUndo}
-        className="p-2.5 rounded-xl transition-all duration-200 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent text-gray-300"
-        title="Отменить (Ctrl+Z)"
-      >
-        <Undo size={18} />
-      </button>
+    <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-center gap-2 p-2 bg-[#0a0d14]/90 backdrop-blur-xl border-t border-white/10 pb-safe shadow-[0_-8px_30px_rgba(0,0,0,0.5)]">
       
-      <button
-        onClick={onRedo}
-        disabled={!canRedo}
-        className="p-2.5 rounded-xl transition-all duration-200 hover:bg-white/10 disabled:opacity-30 disabled:hover:bg-transparent text-gray-300"
-        title="Повторить (Ctrl+Y)"
-      >
-        <Redo size={18} />
-      </button>
+      {/* Group 1: History */}
+      <div className="flex items-center gap-1">
+        <button onClick={onUndo} disabled={!canUndo} className={btnClass} title="Отменить">
+          <Undo size={20} />
+          <span className="text-[10px] font-medium leading-none">Назад</span>
+        </button>
+        <button onClick={onRedo} disabled={!canRedo} className={btnClass} title="Повторить">
+          <Redo size={20} />
+          <span className="text-[10px] font-medium leading-none">Вперёд</span>
+        </button>
+      </div>
 
-      <div className="w-px h-6 bg-white/10 mx-1" />
+      <div className="w-px h-8 bg-white/10 mx-1" />
 
-      <button
-        onClick={handleCopy}
-        className="p-2.5 rounded-xl transition-all duration-200 hover:bg-white/10 text-gray-300"
-        title="Копировать всё"
-      >
-        <Copy size={18} />
-      </button>
+      {/* Group 2: Clipboard */}
+      <div className="flex items-center gap-1">
+        <button onClick={handlePaste} className={btnClass} title="Вставить">
+          <ClipboardPaste size={20} />
+          <span className="text-[10px] font-medium leading-none">Вставить</span>
+        </button>
+        <button onClick={handleCopy} className={btnClass} title="Копировать">
+          <Copy size={20} />
+          <span className="text-[10px] font-medium leading-none">Копия</span>
+        </button>
+      </div>
 
-      <button
-        onClick={handlePaste}
-        className="p-2.5 rounded-xl transition-all duration-200 hover:bg-white/10 text-gray-300"
-        title="Вставить в конец текста"
-      >
-        <ClipboardPaste size={18} />
-      </button>
+      <div className="w-px h-8 bg-white/10 mx-1" />
 
-      <div className="w-px h-6 bg-white/10 mx-1" />
+      {/* Group 3: Actions */}
+      <div className="flex items-center gap-1">
+        <button onClick={onClear} className="flex flex-col items-center justify-center gap-1 min-w-[44px] min-h-[44px] px-2 py-1.5 rounded-xl transition-all duration-200 hover:bg-red-500/20 text-[#ff6b6b]" title="Очистить всё">
+          <Trash2 size={20} />
+          <span className="text-[10px] font-medium leading-none">Стереть</span>
+        </button>
+        <button onClick={handleNotes} className={btnClass} title="Заметки">
+          <BookOpen size={20} />
+          <span className="text-[10px] font-medium leading-none">Заметки</span>
+        </button>
+      </div>
 
-      <button
-        onClick={onClear}
-        className="p-2.5 rounded-xl transition-all duration-200 hover:bg-red-500/20 text-red-400 hover:text-red-300"
-        title="Очистить всё"
-      >
-        <Trash2 size={18} />
-      </button>
     </div>
   );
 };

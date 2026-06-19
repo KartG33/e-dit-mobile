@@ -5,19 +5,20 @@ import { TextEditor } from './components/Editor/TextEditor';
 import { SymbolPanel } from './components/SymbolAnalyzer/SymbolPanel';
 import { SyncButton } from './components/Sync/SyncButton';
 import { SyncModal } from './components/Sync/SyncModal';
-import { BottomNavTab } from './components/UI/BottomNavigation';
-import { MobileCommandBar } from './components/UI/MobileCommandBar';
+import { HeaderTabs, NavTab } from './components/UI/HeaderTabs';
+import { BasicCommands } from './components/Commands/BasicCommands';
+import { SunoCommands } from './components/Commands/SunoCommands';
+import { PresetsTab } from './components/Presets/PresetsTab';
+import { EditorToolbar } from './components/Editor/EditorToolbar';
+import { NotesSheet } from './components/Notes/NotesSheet';
 import { useSync } from './hooks/useSync';
 
 
 function App() {
   const activeEditor = useEditor();
-  const [activeTab, setActiveTab] = useState<BottomNavTab>('basic');
+  const [activeTab, setActiveTab] = useState<NavTab>('basic');
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
-  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
-  // Real measured height of MobileCommandBar, so the editor reserves exactly
-  // enough space and never shows a dead gap or gets covered by the bar.
-  const [commandBarHeight, setCommandBarHeight] = useState(0);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
   const [toggledSymbols, setToggledSymbols] = useState<Set<string>>(new Set());
 
   // What to display: original text with toggled symbols removed
@@ -30,19 +31,8 @@ function App() {
   }, [activeEditor.text, toggledSymbols]);
 
   useEffect(() => {
-    Keyboard.addListener('keyboardWillShow', () => {
-      setIsKeyboardOpen(true);
-    });
-    Keyboard.addListener('keyboardWillHide', () => {
-      setIsKeyboardOpen(false);
-    });
-    
     // Optional: Configure keyboard to resize body
     Keyboard.setResizeMode({ mode: KeyboardResize.Body }).catch(() => {});
-
-    return () => {
-      Keyboard.removeAllListeners();
-    };
   }, []);
 
   const lastReceivedTextRef = useRef<string | null>(null);
@@ -66,19 +56,30 @@ function App() {
 
   return (
     <div className="h-[100dvh] flex flex-col text-white font-sans bg-[#0a0d14] overflow-hidden">
-        {/* Mobile Header */}
-        <header className="flex items-center justify-between px-4 py-3 glass-panel border-b border-white/5 z-20 shadow-lg shrink-0">
-          <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">E-dit</h1>
-          <div className="flex items-center gap-3">
-            <div className="text-gray-400 text-xs font-medium bg-white/5 px-2 py-1 rounded-md border border-white/5 shadow-inner">
-              <span className="text-blue-400">{activeEditor.stats.chars}</span> симв.
+        {/* Unified Sticky Top Section: Header -> Tabs -> Actions -> Symbols */}
+        <div className="flex flex-col z-20 shadow-lg bg-[#0a0d14] shrink-0">
+          <header className="flex items-center justify-between px-4 py-3 glass-panel border-b border-white/5">
+            <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">E-dit</h1>
+            <div className="flex items-center gap-3">
+              <div className="text-gray-400 text-[12px] font-medium bg-white/5 px-1.5 py-0.5 rounded-md border border-white/5 shadow-inner">
+                <span className="text-blue-400">{activeEditor.stats.chars}</span> симв.
+              </div>
+              <SyncButton status={sync.status} onClick={() => setIsSyncModalOpen(true)} />
             </div>
-            <SyncButton status={sync.status} onClick={() => setIsSyncModalOpen(true)} />
-          </div>
-        </header>
+          </header>
 
-        {/* Mobile Main Editor */}
-        <div className="flex-1 flex flex-col min-w-0 relative">
+          {/* Navigation Tabs (Row 2) */}
+          <HeaderTabs activeTab={activeTab} onTabChange={setActiveTab} />
+
+          {/* Action Commands Row */}
+          <div className="w-full border-b border-white/5 bg-white/[0.02]">
+            <div className="flex overflow-x-auto scroll-fade-x px-4 py-2.5 items-center gap-2 scrollbar-hide">
+              {activeTab === 'basic' && <BasicCommands onCommand={activeEditor.applyCommand} />}
+              {activeTab === 'suno' && <SunoCommands onCommand={activeEditor.applyCommand} />}
+              {activeTab === 'presets' && <PresetsTab onCommand={activeEditor.applyCommand} />}
+            </div>
+          </div>
+
           {/* Symbol Analyzer above text */}
           <SymbolPanel 
             text={activeEditor.text} 
@@ -92,7 +93,10 @@ function App() {
               });
             }}
           />
-          
+        </div>
+
+        {/* Mobile Main Editor */}
+        <div className="flex-1 flex flex-col min-w-0 relative overflow-y-auto">
           <TextEditor
             value={displayedText}
             onChange={(newText) => {
@@ -102,23 +106,20 @@ function App() {
             }}
             readOnly={toggledSymbols.size > 0}
             placeholder="Введите или вставьте текст..."
-            style={{ paddingBottom: isKeyboardOpen ? 0 : commandBarHeight }}
+            className="pb-24" 
           />
         </div>
 
-        {/* Unified Mobile Command Bar */}
-        <MobileCommandBar
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onCommand={activeEditor.applyCommand}
+        {/* Fixed Bottom Toolbar */}
+        <EditorToolbar
           onUndo={activeEditor.undo}
           onRedo={activeEditor.redo}
           canUndo={activeEditor.canUndo}
           canRedo={activeEditor.canRedo}
           onClear={activeEditor.clear}
+          onNotesClick={() => setIsNotesOpen(true)}
           text={activeEditor.text}
-          isKeyboardOpen={isKeyboardOpen}
-          onHeightChange={setCommandBarHeight}
+          onCommand={activeEditor.applyCommand}
         />
 
         {/* Sync Modal */}
@@ -131,6 +132,12 @@ function App() {
           errorMsg={sync.errorMsg}
           onConnect={sync.connectToPeer}
           onDisconnect={sync.disconnect}
+        />
+
+        {/* Notes Sheet */}
+        <NotesSheet 
+          isOpen={isNotesOpen} 
+          onClose={() => setIsNotesOpen(false)} 
         />
     </div>
   );
